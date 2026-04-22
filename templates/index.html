@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Changelog Translator</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #000; font-family: -apple-system, 'Inter', sans-serif; min-height: 100vh; padding: 48px 20px; }
+    .container { max-width: 580px; margin: 0 auto; }
+    .eyebrow { font-size: 11px; font-weight: 500; color: #666; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 12px; }
+    h1 { font-size: 28px; font-weight: 600; color: #fff; margin: 0 0 8px; letter-spacing: -0.8px; line-height: 1.2; }
+    .sub { font-size: 13px; color: #666; margin-bottom: 36px; line-height: 1.6; }
+    .field { margin-bottom: 14px; }
+    .field-label { font-size: 11px; font-weight: 500; color: #888; margin-bottom: 6px; display: block; }
+    .v-input { width: 100%; background: #0a0a0a; border: 1px solid #1a1a1a; border-radius: 6px; padding: 10px 14px; font-size: 13px; color: #ededed; outline: none; transition: border-color .15s; }
+    .v-input:focus { border-color: #333; }
+    .v-input::placeholder { color: #333; }
+    .row { display: flex; gap: 10px; }
+    .row .field { flex: 1; margin-bottom: 0; }
+    .btn { width: 100%; margin-top: 18px; padding: 10px; background: #fff; color: #000; border: none; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer; transition: background .15s; }
+    .btn:hover { background: #e4e4e7; }
+    .btn:disabled { background: #1a1a1a; color: #444; cursor: not-allowed; }
+    .status { font-size: 12px; color: #666; margin-top: 10px; min-height: 18px; }
+    .divider { border: none; border-top: 1px solid #1a1a1a; margin: 28px 0; display: none; }
+    .result-header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 20px; }
+    .result-title { font-size: 13px; font-weight: 500; color: #ededed; }
+    .result-meta { font-size: 11px; color: #444; }
+    .tabs { display: flex; gap: 2px; background: #0a0a0a; border: 1px solid #1a1a1a; border-radius: 6px; padding: 3px; margin-bottom: 20px; width: fit-content; }
+    .tab { padding: 5px 14px; font-size: 12px; color: #666; border-radius: 4px; cursor: pointer; transition: background .15s, color .15s; }
+    .tab.active { background: #1a1a1a; color: #ededed; }
+    .output { display: none; }
+    .output.active { display: block; }
+    .section { margin-bottom: 20px; }
+    .section-label { font-size: 10px; font-weight: 600; color: #444; text-transform: uppercase; letter-spacing: .1em; margin-bottom: 8px; }
+    .item { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; border-bottom: 1px solid #111; font-size: 12px; }
+    .item:last-child { border-bottom: none; }
+    .item-dot { width: 5px; height: 5px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; }
+    .item-text { color: #a0a0a0; line-height: 1.6; white-space: pre-wrap; }
+    .raw-output { font-size: 13px; color: #ededed; line-height: 1.9; white-space: pre-wrap; background: #0a0a0a; border: 1px solid #1a1a1a; border-radius: 8px; padding: 20px; font-family: -apple-system, sans-serif; }
+    .tab-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .copy-btn { font-size: 11px; color: #666; background: #0a0a0a; border: 1px solid #1a1a1a; border-radius: 5px; padding: 4px 10px; cursor: pointer; transition: color .15s, border-color .15s; }
+    .copy-btn:hover { color: #ededed; border-color: #333; }
+    .copy-btn.copied { color: #4ade80; border-color: #4ade80; }
+    .loading-dots { display: inline-flex; gap: 4px; vertical-align: middle; margin-left: 6px; }
+    .loading-dots span { width: 4px; height: 4px; border-radius: 50%; background: #444; animation: pulse 1.2s ease-in-out infinite; }
+    .loading-dots span:nth-child(2) { animation-delay: .2s; }
+    .loading-dots span:nth-child(3) { animation-delay: .4s; }
+@keyframes pulse { 0%,80%,100%{background:#444} 40%{background:#ededed} }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="eyebrow">Changelog Translator</div>
+    <h1>What changed<br/>between versions?</h1>
+    <p class="sub">Paste any public GitHub repo and two version tags.<br/>Get changelogs written for every audience.</p>
+
+    <div class="field">
+      <label class="field-label">Repository URL</label>
+      <input class="v-input" id="repo" placeholder="https://github.com/expressjs/express"/>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label class="field-label">From tag</label>
+        <input class="v-input" id="base" placeholder="4.18.1"/>
+      </div>
+      <div class="field">
+        <label class="field-label">To tag</label>
+        <input class="v-input" id="head" placeholder="4.18.2"/>
+      </div>
+    </div>
+    <button class="btn" id="btn">Translate →</button>
+    <div class="status" id="status"></div>
+
+    <hr class="divider" id="divider"/>
+
+    <div id="results" style="display:none">
+      <div class="result-header">
+        <span class="result-title" id="result-repo"></span>
+        <span class="result-meta" id="result-meta"></span>
+      </div>
+
+      <div class="tabs">
+        <div class="tab active" onclick="showTab('developer', this)">Developers</div>
+        <div class="tab" onclick="showTab('user', this)">Users</div>
+        <div class="tab" onclick="showTab('security', this)">Security</div>
+      </div>
+
+      <div id="developer" class="output active">
+  <div class="tab-header">
+    <span style="font-size:11px;color:#444;text-transform:uppercase;letter-spacing:.08em;font-weight:600">Developer changelog</span>
+    <button class="copy-btn" onclick="copyTab('developer-content', this)">Copy</button>
+  </div>
+  <div class="raw-output" id="developer-content"></div>
+</div>
+<div id="user" class="output">
+  <div class="tab-header">
+    <span style="font-size:11px;color:#444;text-transform:uppercase;letter-spacing:.08em;font-weight:600">User changelog</span>
+    <button class="copy-btn" onclick="copyTab('user-content', this)">Copy</button>
+  </div>
+  <div class="raw-output" id="user-content"></div>
+</div>
+<div id="security" class="output">
+  <div class="tab-header">
+    <span style="font-size:11px;color:#444;text-transform:uppercase;letter-spacing:.08em;font-weight:600">Security changelog</span>
+    <button class="copy-btn" onclick="copyTab('security-content', this)">Copy</button>
+  </div>
+  <div class="raw-output" id="security-content"></div>
+</div>
+
+  <script>
+    async function translate() {
+      const btn = document.getElementById("btn")
+      const status = document.getElementById("status")
+      const results = document.getElementById("results")
+      const divider = document.getElementById("divider")
+
+      const repo = document.getElementById("repo").value.trim()
+      const base = document.getElementById("base").value.trim()
+      const head = document.getElementById("head").value.trim()
+
+      if (!repo || !base || !head) {
+        status.textContent = "Please fill in all three fields."
+        return
+      }
+
+      btn.disabled = true
+      btn.innerHTML = "Fetching commits <span class='loading-dots'><span></span><span></span><span></span></span>"
+      status.textContent = ""
+      results.style.display = "none"
+      divider.style.display = "none"
+
+      try {
+        btn.innerHTML = "Generating changelogs <span class='loading-dots'><span></span><span></span><span></span></span>"
+        const res = await fetch("/translate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ repo_url: repo, base_tag: base, head_tag: head })
+        })
+
+        const data = await res.json()
+
+        if (data.error) {
+          status.textContent = "Error: " + data.error
+          btn.disabled = false
+          btn.textContent = "Translate →"
+          return
+        }
+
+        document.getElementById("result-repo").textContent = data.repo
+        document.getElementById("result-meta").textContent = `${data.commit_count} commits`
+        document.getElementById("developer-content").textContent = data.changelogs.developer
+        document.getElementById("user-content").textContent = data.changelogs.user
+        document.getElementById("security-content").textContent = data.changelogs.security
+
+        divider.style.display = "block"
+        results.style.display = "block"
+
+      } catch (err) {
+        status.textContent = "Something went wrong. Is the server running?"
+      }
+
+      btn.disabled = false
+      btn.textContent = "Translate →"
+    }
+
+    function showTab(name, el) {
+      document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"))
+      document.querySelectorAll(".output").forEach(o => o.classList.remove("active"))
+      el.classList.add("active")
+      document.getElementById(name).classList.add("active")
+    }
+    function copyTab(id, btn) {
+       const text = document.getElementById(id).textContent
+       navigator.clipboard.writeText(text).then(() => {
+       btn.textContent = "Copied!"
+       btn.classList.add("copied")
+        setTimeout(() => {
+       btn.textContent = "Copy"
+       btn.classList.remove("copied")
+       }, 2000)
+  })
+}
+    document.getElementById("btn").addEventListener("click", translate)
+  </script>
+</body>
+</html>
