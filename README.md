@@ -1,38 +1,59 @@
 # Changelog Translator
 
-Turns raw GitHub commit history into audience-specific changelogs using AI.
+> Turn raw GitHub commits into changelogs for any audience — instantly.
 
-Give it any public GitHub repo and two version tags — it fetches every change between them and generates three completely different explanations depending on who's reading.
+**Live demo → [changelog-translator.onrender.com](https://changelog-translator.onrender.com)**
+
+---
 
 ## The problem
 
-When software updates, developers write commit messages for themselves — technical, abbreviated, full of jargon. Nobody translates these into something a regular user or a security team can actually act on. This tool does that automatically.
+When software updates, developers write commit messages for themselves — technical, abbreviated, full of jargon. Nobody translates these into something a regular user or a security team can actually act on.
 
-## What it generates
+This tool does that automatically.
 
-- **Developer changelog** — technical detail, breaking changes, migration notes
-- **User changelog** — plain English, no jargon, focused on what changed for them
-- **Security changelog** — only security-relevant changes, dependency updates, vulnerabilities fixed
+---
+
+## What it does
+
+Give it any public GitHub repo and two version tags. It fetches every commit between them, classifies each change by type, and generates three completely different changelogs depending on who's reading.
+
+- **Developers** — technical detail, breaking changes, dependency updates, migration notes
+- **Users** — plain English, no jargon, focused on what actually changed for them  
+- **Security teams** — only security-relevant changes, vulnerable dependencies, auth updates
+
+Same raw data. Three completely different outputs. Each one written for its audience.
+
+---
 
 ## How it works
+GitHub API → fetch commits between two tags
+↓
+Classifier → sort by type (bug fix, feature, security, performance)
+↓
+Groq LLM (LLaMA 3.3 70B) → three audience-specific prompts
+↓
+Three changelogs rendered in the browser
 
-1. Fetches commits between two version tags using the GitHub API
-2. Classifies each commit by type (bug fix, feature, security, performance)
-3. Sends the classified commits to an LLM with three different audience-specific prompts
-4. Returns three completely different changelogs from the same raw data
+The key design decision: three separate prompts instead of one. Audience-specific instructions produce dramatically better output than asking for multiple formats in a single call.
+
+---
 
 ## Tech stack
 
-- Python
-- GitHub REST API
-- Groq API (LLaMA 3.3 70B)
-- Flask (coming in v2)
+- **Backend** — Python, Flask
+- **AI** — Groq API (LLaMA 3.3 70B)
+- **Data** — GitHub REST API
+- **Frontend** — HTML, CSS, JavaScript
+- **Deployment** — Render
 
-## Setup
+---
+
+## Run locally
 
 1. Clone the repo
 ```bash
-   git clone https://github.com/yourusername/changelog-translator.git
+   git clone https://github.com/aditee-eng/changelog-translator.git
    cd changelog-translator
 ```
 
@@ -44,38 +65,38 @@ When software updates, developers write commit messages for themselves — techn
 
 3. Install dependencies
 ```bash
-   pip install requests groq python-dotenv
+   pip install -r requirements.txt
 ```
 
-4. Create a `.env` file in the root folder
+4. Create a `.env` file
 GITHUB_TOKEN=your_github_token
 GROQ_API_KEY=your_groq_api_key
 
-5. Run it
+5. Run
 ```bash
-   python test.py
+   python app.py
 ```
 
-## Example output
+6. Open `http://localhost:5000`
 
-**Input:** `expressjs/express` from `4.18.1` to `4.18.2`
+---
 
-**Developer changelog:**
-> Fixed regression routing a large stack in a single route. Updated body-parser to 1.20.1, qs to 6.11.0. Breaking: removed unused function arguments in examples.
+## Example
 
-**User changelog:**
-> Routes with a lot of layers now work more smoothly. Behind-the-scenes tools updated to keep Express.js secure and stable.
+**Input:** `https://github.com/expressjs/express` · `4.18.1` → `4.18.2`
 
-**Security changelog:**
-> body-parser updated to 1.20.1 and qs updated to 6.11.0 — both may include security fixes. No direct vulnerabilities patched in this release.
+**Developer output:**
+> Fixed regression routing large stack in single route. body-parser updated to 1.20.1, qs to 6.11.0. Breaking: removed unused function arguments in examples.
 
-## What's next
+**User output:**
+> Routes with lots of layers now work more smoothly. Behind-the-scenes tools updated to keep things secure and stable.
 
-- Flask API with web frontend
-- Support for private repos
-- Side-by-side diff view between versions
+**Security output:**
+> body-parser@1.20.1 and qs@6.11.0 updated — both may include security fixes. No direct CVEs patched in this release.
+
+---
 
 ## Get API keys
 
-- GitHub token: github.com → Settings → Developer Settings → Personal Access Tokens
-- Groq API key: console.groq.com
+- GitHub token — github.com → Settings → Developer Settings → Personal Access Tokens
+- Groq API key — [console.groq.com](https://console.groq.com)
