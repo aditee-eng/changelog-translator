@@ -21,11 +21,25 @@ def translate():
     parts = repo_url.rstrip("/").split("/")
     owner, repo = parts[-2], parts[-1]
 
+    # get token directly here to test
+    token = os.getenv("GITHUB_TOKEN")
+    headers = {"Authorization": f"token {token}"}
+    url = f"https://api.github.com/repos/{owner}/{repo}/compare/{base_tag}...{head_tag}"
+    
+    import requests as req
+    response = req.get(url, headers=headers)
+    
+    # return raw github response so we can see what's happening
+    if response.status_code != 200:
+        return jsonify({
+            "error": f"GitHub API failed: {response.status_code}",
+            "message": response.json().get("message"),
+            "token_present": token is not None
+        }), 400
+
     commits = get_commits_between_tags(owner, repo, base_tag, head_tag)
-    print(f"Owner: {owner}, Repo: {repo}, Base: {base_tag}, Head: {head_tag}")
-    print(f"Commits found: {len(commits)}")
     if not commits:
-      return jsonify({"error": "No commits found between these tags"}), 400 
+        return jsonify({"error": "No commits found between these tags"}), 400
 
     categories = classify_commits(commits)
     changelogs = generate_changelog(categories, repo)
