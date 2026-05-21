@@ -3,6 +3,7 @@ from flask import Flask, request, jsonify, render_template
 from github_fetcher import get_commits_between_tags
 from classifier import classify_commits
 from translator import generate_changelog
+print("APP STARTING — GITHUB TOKEN:", os.getenv("GITHUB_TOKEN") is not None)
 
 app = Flask(__name__)
 
