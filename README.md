@@ -27,16 +27,12 @@ Same raw data. Three completely different outputs. Each one written for its audi
 ---
 
 ## How it works
-GitHub API → fetch commits between two tags
-↓
-Classifier → sort by type (bug fix, feature, security, performance)
-↓
-Groq LLM (LLaMA 3.3 70B) → three audience-specific prompts
-↓
-Three changelogs rendered in the browser
 
-The key design decision: three separate prompts instead of one. Audience-specific instructions produce dramatically better output than asking for multiple formats in a single call.
-
+1. Resolves both version tags to their exact commit dates via the GitHub API
+2. Fetches all commits to the repo within that date range
+3. Classifies each commit by type (bug fix, feature, security, performance)
+4. Sends the classified commits to an LLM with three audience-specific prompts
+5. Returns three completely different changelogs from the same raw data
 ---
 
 ## Tech stack

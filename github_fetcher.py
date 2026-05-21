@@ -36,7 +36,6 @@ def get_commits_between_tags(owner: str, repo: str, base_tag: str, head_tag: str
         print(f"Could not resolve tag dates: {base_tag}={base_date}, {head_tag}={head_date}")
         return []
 
-    print(f"Fetching commits between {base_date} and {head_date}")
 
     # Step 2: fetch commits between those dates
     url = f"https://api.github.com/repos/{owner}/{repo}/commits"
