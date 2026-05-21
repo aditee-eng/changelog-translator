@@ -6,22 +6,52 @@ load_dotenv()
 
 def get_commits_between_tags(owner: str, repo: str, base_tag: str, head_tag: str) -> list:
     
-    # moved inside function so token is read fresh every call
     token = os.getenv("GITHUB_TOKEN")
     headers = {"Authorization": f"token {token}"}
-    
-    print(f"Token present: {token is not None}")  # debug line
-    
-    url = f"https://api.github.com/repos/{owner}/{repo}/compare/{base_tag}...{head_tag}"
-    response = requests.get(url, headers=headers)
-    print(f"GitHub API response: {response.status_code} — {response.text[:200]}")
+
+    # Step 1: get the date of each tag
+    def get_tag_date(tag: str):
+        # try lightweight tag first
+        url = f"https://api.github.com/repos/{owner}/{repo}/git/refs/tags/{tag}"
+        res = requests.get(url, headers=headers).json()
+        
+        sha = res.get("object", {}).get("sha")
+        tag_type = res.get("object", {}).get("type")
+        
+        if tag_type == "tag":
+            # annotated tag — need one more call
+            tag_url = f"https://api.github.com/repos/{owner}/{repo}/git/tags/{sha}"
+            tag_data = requests.get(tag_url, headers=headers).json()
+            sha = tag_data.get("object", {}).get("sha")
+        
+        # get commit date
+        commit_url = f"https://api.github.com/repos/{owner}/{repo}/commits/{sha}"
+        commit_data = requests.get(commit_url, headers=headers).json()
+        return commit_data.get("commit", {}).get("committer", {}).get("date")
+
+    base_date = get_tag_date(base_tag)
+    head_date = get_tag_date(head_tag)
+
+    if not base_date or not head_date:
+        print(f"Could not resolve tag dates: {base_tag}={base_date}, {head_tag}={head_date}")
+        return []
+
+    print(f"Fetching commits between {base_date} and {head_date}")
+
+    # Step 2: fetch commits between those dates
+    url = f"https://api.github.com/repos/{owner}/{repo}/commits"
+    params = {
+        "since": base_date,
+        "until": head_date,
+        "per_page": 100
+    }
+    response = requests.get(url, headers=headers, params=params)
 
     if response.status_code != 200:
         print(f"Error: {response.status_code} — {response.json().get('message')}")
         return []
 
-    data = response.json()
-    commits = data.get("commits", [])
+    commits = response.json()
 
     cleaned = []
     for c in commits:
