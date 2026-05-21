@@ -21,8 +21,10 @@ def translate():
     owner, repo = parts[-2], parts[-1]
 
     commits = get_commits_between_tags(owner, repo, base_tag, head_tag)
+    print(f"Owner: {owner}, Repo: {repo}, Base: {base_tag}, Head: {head_tag}")
+    print(f"Commits found: {len(commits)}")
     if not commits:
-        return jsonify({"error": "No commits found between these tags"}), 400
+      return jsonify({"error": "No commits found between these tags"}), 400 
 
     categories = classify_commits(commits)
     changelogs = generate_changelog(categories, repo)
