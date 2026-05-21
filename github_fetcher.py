@@ -14,6 +14,7 @@ def get_commits_between_tags(owner: str, repo: str, base_tag: str, head_tag: str
     
     url = f"https://api.github.com/repos/{owner}/{repo}/compare/{base_tag}...{head_tag}"
     response = requests.get(url, headers=headers)
+    print(f"GitHub API response: {response.status_code} — {response.text[:200]}")
 
     if response.status_code != 200:
         print(f"Error: {response.status_code} — {response.json().get('message')}")
