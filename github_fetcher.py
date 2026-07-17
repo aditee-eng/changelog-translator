@@ -32,6 +32,11 @@ def get_commits_between_tags(owner: str, repo: str, base_tag: str, head_tag: str
     base_date = get_tag_date(base_tag)
     head_date = get_tag_date(head_tag)
 
+    print("Token exists:", bool(token))
+    print("Base tag:", base_tag, "Date:", base_date)
+    print("Head tag:", head_tag, "Date:", head_date)
+
+
     if not base_date or not head_date:
         print(f"Could not resolve tag dates: {base_tag}={base_date}, {head_tag}={head_date}")
         return []
@@ -45,6 +50,10 @@ def get_commits_between_tags(owner: str, repo: str, base_tag: str, head_tag: str
         "per_page": 100
     }
     response = requests.get(url, headers=headers, params=params)
+
+    print("Status Code:", response.status_code)
+    print("Request URL:", response.url)
+    print("Response:", response.text)
 
     if response.status_code != 200:
         print(f"Error: {response.status_code} — {response.json().get('message')}")
